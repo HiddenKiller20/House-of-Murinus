@@ -34,3 +34,8 @@ Only staff-published summaries and group scope appear in the public registry. Re
 Existing records from another hosting provider are not automatically copied. This repository contains source code and branding only, with no passwords or private reports. The older ChatGPT-hosted deployment is separate and has not been deleted or modified by this export.
 
 Login and report limits use the network peer address. Behind a shared proxy they may apply across visitors; this intentionally does not trust client-supplied forwarding headers. Staff access uses one shared password; distribute it only to approved reviewers.
+
+## Staff content management
+The visible **Staff Login** tab opens the password sign-in and dashboard. Use **Edit website content** for site name, logo URL, accent color, both offense lists, introductions, and saved text overrides. Open a public page and choose **Edit this page** in the staff toolbar to edit headings, navigation labels, descriptions, and button text. Choose **Save page edits** or **Cancel**. Edits are plain text and persist in SQLite across deployments.
+
+Open a case in the staff queue to edit its subject, profile, category, incident, private reporter details, private evidence, public summary, scope, notes, and status. Use **archived** to remove a record from public view while retaining it privately; change its status to restore it. **Add a case** opens the intake form, after which staff can review and publish it. Infrastructure, passwords, and source-code changes remain in Railway/GitHub settings.
