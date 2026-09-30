@@ -13,3 +13,21 @@ test('private intake, staff authorization, approval and revocation',async()=>{
  assert.equal((await (await worker.fetch(req('cases?status=staff','GET',null,true),env)).json()).cases[0].status,'revoked');
 });
 test('reject invalid evidence, missing consent and foreign origins',async()=>{assert.equal((await worker.fetch(req('cases','POST',{...report,evidence:'javascript:alert(1)'}),env)).status,400);assert.equal((await worker.fetch(req('cases','POST',{...report,consent:false}),env)).status,400);const r=req('cases','POST',report);r.headers.set('Origin','https://other.test');assert.equal((await worker.fetch(r,env)).status,403)});
+test('only staff can edit persisted site content, unsafe settings are rejected',async()=>{
+ const settings={name:'Updated House',accent:'#bb99dd',logo:'',blacklistTitle:'Rules',blacklistIntro:'',infoTitle:'Info',infoIntro:'Context',blacklistRules:['1.1 Example'],infoRules:['2.1 Example'],texts:{'One community.':'Together.'}};
+ assert.equal((await worker.fetch(req('content','POST',settings),env)).status,401);
+ assert.equal((await worker.fetch(req('content','POST',settings,true),env)).status,200);
+ assert.deepEqual((await (await worker.fetch(req('content'),env)).json()).content,settings);
+ assert.equal((await worker.fetch(req('content','POST',{...settings,logo:'javascript:alert(1)'},true),env)).status,400);
+ const foreign=req('content','POST',settings,true);foreign.headers.set('Origin','https://elsewhere.test');assert.equal((await worker.fetch(foreign,env)).status,403);
+});
+test('staff can edit all case details and archive; unsafe evidence edits are rejected',async()=>{
+ const created=await (await worker.fetch(req('cases','POST',report),env)).json();
+ const change={...report,edit:true,subject:'Corrected Subject',status:'info',decision:'Verified correction',public_summary:'New public summary',scope:'Example group'};
+ assert.equal((await worker.fetch(req('cases/'+created.id,'POST',change),env)).status,401);
+ assert.equal((await worker.fetch(req('cases/'+created.id,'POST',{...change,evidence:'javascript:alert(1)'},true),env)).status,400);
+ assert.equal((await worker.fetch(req('cases/'+created.id,'POST',change,true),env)).status,200);
+ const published=(await (await worker.fetch(req('cases?status=info'),env)).json()).cases;assert.equal(published.find(x=>x.id===created.id).subject,'Corrected Subject');
+ assert.equal((await worker.fetch(req('cases/'+created.id,'POST',{status:'archived',decision:'Archived by staff'},true),env)).status,200);
+ assert.equal((await (await worker.fetch(req('cases?status=info'),env)).json()).cases.some(x=>x.id===created.id),false);
+});
